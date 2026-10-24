@@ -5,10 +5,23 @@ A FastAPI service for capturing AAC block sales enquiries from WhatsApp, phone, 
 ## Current scope
 
 - Health endpoint for deployment checks
-- Enquiry intake endpoint with contact, location, project, quantity, and source details
-- SQLite storage with a staff-review status and notes workflow
-- List, filter, and update saved enquiries through the API
-- No production credentials or messaging-provider integration
+- Guided, channel-agnostic intake flow for WhatsApp, phone, or web adapters
+- Enquiry capture with location, project, quantity, requirement, and contact preference
+- SQLite storage with staff-review status and review notes
+- No quotation endpoint, price calculation, or production messaging credentials
+
+## Project structure
+
+```
+app/
+  api/routes/        HTTP endpoints
+  core/              runtime configuration
+  db/                SQLite setup and connections
+  domain/            business entities and status values
+  repositories/      database reads and writes
+  schemas/           API request and response contracts
+  services/          enquiry and guided intake workflows
+```
 
 ## Quick start
 
@@ -29,12 +42,25 @@ pytest
 
 ## API workflow
 
-1. A future WhatsApp, phone, or web adapter calls `POST /enquiries` after collecting the lead details.
-2. The service saves the lead with `pending_review`; it has no quotation endpoint.
-3. Staff use `GET /enquiries` and `PATCH /enquiries/{id}/review` to assign the next status and review notes.
+1. A WhatsApp, phone, or web adapter passes each customer reply to `POST /intake/messages`.
+2. The intake service gathers customer name, location, project type, quantity, and requirements.
+3. A completed conversation becomes an enquiry with `pending_review`; it has no quotation endpoint.
+4. Staff use `GET /enquiries` and `PATCH /enquiries/{id}/review` to manage follow-up.
+
+## API endpoints
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/intake/messages` | Accept one normalized inbound message and return the next intake prompt. |
+| `POST` | `/enquiries` | Create an enquiry directly (for staff or a web form). |
+| `GET` | `/enquiries` | List enquiries; filter with `?status=pending_review`. |
+| `GET` | `/enquiries/{id}` | Read one enquiry. |
+| `PATCH` | `/enquiries/{id}/review` | Update status and staff-only review notes. |
+
+The `/intake/messages` endpoint is intentionally provider-neutral. A production WhatsApp adapter should validate webhook signatures, translate provider payloads into the normalized request format, and send `reply_text` through the provider API.
 
 ## Next steps
 
-1. Connect a WhatsApp Business provider and map messages to the intake fields.
-2. Add a phone-call provider and transcript-to-enquiry adapter.
-3. Add staff authentication and a review dashboard.
+1. Add a verified WhatsApp Business webhook adapter.
+2. Add a phone-call provider and transcript-to-intake adapter.
+3. Add staff authentication, a review dashboard, and a production database.
