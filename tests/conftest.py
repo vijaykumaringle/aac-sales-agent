@@ -1,22 +1,18 @@
 import sqlite3
-from contextlib import closing
 
-from app.core.config import get_settings
-
-
-def connection() -> sqlite3.Connection:
-    path = get_settings().database_path
-    path.parent.mkdir(parents=True, exist_ok=True)
-    database = sqlite3.connect(path)
-    database.row_factory = sqlite3.Row
-    return database
+import pytest
 
 
-def initialize_database() -> None:
-    with closing(connection()) as database:
+@pytest.fixture(autouse=True)
+def prepare_sqlite_database(tmp_path, monkeypatch) -> None:
+    database_path = tmp_path / "sales-agent.db"
+    monkeypatch.setenv("DATABASE_URL", "")
+    monkeypatch.setenv("DATABASE_PATH", str(database_path))
+
+    with sqlite3.connect(database_path) as database:
         database.executescript(
             """
-            CREATE TABLE IF NOT EXISTS enquiries (
+            CREATE TABLE enquiries (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 customer_name TEXT NOT NULL,
                 phone_number TEXT NOT NULL,
@@ -32,7 +28,7 @@ def initialize_database() -> None:
                 updated_at TEXT NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS intake_sessions (
+            CREATE TABLE intake_sessions (
                 id TEXT PRIMARY KEY,
                 channel TEXT NOT NULL,
                 contact_identifier TEXT NOT NULL,
@@ -49,9 +45,8 @@ def initialize_database() -> None:
                 FOREIGN KEY(enquiry_id) REFERENCES enquiries(id)
             );
 
-            CREATE UNIQUE INDEX IF NOT EXISTS active_intake_session
+            CREATE UNIQUE INDEX active_intake_session
             ON intake_sessions(channel, contact_identifier)
             WHERE enquiry_id IS NULL;
             """
         )
-        database.commit()
