@@ -3,8 +3,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 
-def test_create_and_review_enquiry(tmp_path, monkeypatch) -> None:
-    monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "sales-agent.db"))
+def test_create_and_review_enquiry() -> None:
     with TestClient(app) as client:
         create_response = client.post(
             "/enquiries",
@@ -31,8 +30,7 @@ def test_create_and_review_enquiry(tmp_path, monkeypatch) -> None:
     assert review_response.json()["review_notes"] == "Call back on Tuesday morning."
 
 
-def test_list_enquiries_can_filter_by_status(tmp_path, monkeypatch) -> None:
-    monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "sales-agent.db"))
+def test_list_enquiries_can_filter_by_status() -> None:
     with TestClient(app) as client:
         enquiry = client.post(
             "/enquiries",

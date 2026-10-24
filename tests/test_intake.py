@@ -12,8 +12,7 @@ def send(client: TestClient, text: str) -> dict:
     return response.json()
 
 
-def test_intake_converts_a_completed_conversation_to_pending_review_enquiry(tmp_path, monkeypatch) -> None:
-    monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "sales-agent.db"))
+def test_intake_converts_a_completed_conversation_to_pending_review_enquiry() -> None:
     with TestClient(app) as client:
         first_reply = send(client, "Hello")
         assert first_reply["next_step"] == "customer_name"

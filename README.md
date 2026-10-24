@@ -34,6 +34,10 @@ uvicorn app.main:app --reload
 
 Open `http://127.0.0.1:8000/docs` for the interactive API documentation.
 
+## Database setup
+
+The application does not create, alter, or delete database tables at startup. Configure `DATABASE_URL` to point to a database where the required tables already exist. FastAPI can start and serve `/docs` without a database connection; database connectivity is needed when using enquiry or intake endpoints.
+
 ## Test
 
 ```bash
